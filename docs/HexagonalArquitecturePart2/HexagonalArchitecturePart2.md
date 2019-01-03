@@ -203,7 +203,7 @@ nos permite definir en el test el resultado esperado antes de la ejecución de �
 Conclusiones
 ----
 Con este sencillísimo ejemplo, hemos podido demostrar los problemas que nos aporta una 
-de las prácticas más extendidas y cuotidianes en los proyectos PHP. Sin embargo, tal y como
+de las prácticas más extendidas y cuotidianas en los proyectos PHP. Sin embargo, tal y como
 hemos podido observar, es una práctica que debemos evitar.
 Tal y como vimos en el artículo anterior, es muy importante aislar nuestro dominio de cualquier
 dependencia externa. 
