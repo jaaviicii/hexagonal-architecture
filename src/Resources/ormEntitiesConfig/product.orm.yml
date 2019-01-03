@@ -1,0 +1,14 @@
+ProductBundle\Domain\Product:
+  type: entity
+  fields:
+    id:
+      type: integer
+      id: true
+
+    name:
+      type: string
+
+    reference:
+      type: string
+
+  lifecycleCallbacks: {}

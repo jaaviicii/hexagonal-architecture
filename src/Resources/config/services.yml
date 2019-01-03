@@ -1,0 +1,8 @@
+services:
+  product.application.product_service:
+    class: ProductBundle\Application\ProductApplicationService
+    arguments: ['@product.repository.product.doctrine_adapter']
+
+  product.repository.product.doctrine_adapter:
+    class: ProductBundle\Repository\ProductRepositoryDoctrineAdapter
+    arguments: ['@doctrine.orm.entity_manager']

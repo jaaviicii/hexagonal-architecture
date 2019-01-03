@@ -1,0 +1,241 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"/><title>Desconocido </title></head><body>
+<h1 id="aplicando-arquitectura-hexagonal-a-un-proyecto-symfony">Aplicando Arquitectura Hexagonal a un proyecto Symfony</h1>
+<p>La Arquitectura Hexagonal, también conocida como Arquitectura de Puertos y
+Adaptadores, es una de las arquitecturas mas utilizadas hoy en dia. En este 
+artículo se pretende enumerar las características propias de este tipo de 
+arquitectura y vamos a tratar de aplicarlas en un pequeño ejemplo práctico.</p>
+<h2 id="principios-de-la-arquitectura-hexagonal">Principios de la Arquitectura Hexagonal</h2>
+<p>La Arquitectura Hexagonal es un tipo de arquitectura que se basa en el 
+principio de Puertos y Adaptadores. Esta arquitectura sigue la premisa de 
+garantizar la abstracción total del dominio respecto de todas las dependencias 
+que podamos tener (repositorios, frameworks, librerías de terceros, etc.).</p>
+<p>El principio de Puertos y Adaptadores, como su propio nombre indica, se basa en
+aislar completamente nuestro dominio de cualquier dependencia externa y
+manejar la interacción de estas dependencias con nuestro domino mediante
+el uso de:
+ * Puertos: que nos permitan estandarizar las funcionalidades/acciones que utilizamos
+de dichas dependencias y de que manera o con qué estructuras de datos lo harán.
+ * Adaptadores: que se encargarán de realizar la adaptación de las dependencias hacia 
+ las estructuras de datos que necesitemos dentro de nuestro dominio.</p>
+<p>Además de estos principios básicos, la arquitectura hexagonal sigue los 
+principios definidos por Robert C. Martin en The Clean Architecture para garantizar una
+arquitectura limpia, escalable y adaptable al cambio:</p>
+<ul>
+<li>
+<p><strong>Independencia del framework</strong>: Tal y como hemos definido anteriormente, 
+la arquitectura hexagonal nos garantiza independencia total de cualquier 
+framework o dependencia externa.</p>
+</li>
+<li>
+<p><strong>Testeable</strong>: Al tener las reglas de negocio aisladas en nuestro dominio, podemos probar
+de manera unitaria todos los requerimientos de nuestra aplicación sin ningún factor externo
+que pueda adulterar la funcionalidad de éste.</p>
+</li>
+<li>
+<p><strong>Independiente de la UI</strong>: La interfaz de usuario es un ecosistema continuamente cambiante,
+lo cual no significa que las reglas de negocio lo hagan por igual. Abstaernos de la UI nos
+permite mantener un dominio más estable y que nos evite tener que entrar a modificarlo por factores
+completamente externos a las reglas de negocio.</p>
+</li>
+<li>
+<p><strong>Independiente de la base de datos</strong>: Nuestro dominio no debe conocer la manera en la
+que decidimos estructurar o guardar nuestros datos en un repositorio. Eso a él no le aporta nada,
+salvo acoplamiento y un futuro problema si decidimos cambiar nuestra base de datos
+en algun momento.</p>
+</li>
+<li>
+<p><strong>Independiente de cualquier agente externo</strong>: Nuestro dominio es una representación de
+nuestras reglas de negocio, por lo tanto no le concierne el conocimiento de cualquier dependencia externa.
+Cada librería externa tendrá su propio adaptador, que será quien se encargue de la interacción con el dominio.</p>
+</li>
+</ul>
+<p>La Architectura Hexagonal forma parte de las llamadas <em>Clean Architectures</em>, que se basan
+en el siguiente esquema:</p>
+<p><img alt="hexagonal_schema.png" src="HexagonalArquitecturePart1/hexagonal_schema-1.png"/> </p>
+<p><em>Esquema de Arquitectura Hexagonal.
+Extraida de https://blog.novoda.com/hexawhat-architecture/</em></p>
+<p>Podemos observar que los conceptos explicados anteriormente encajan en este esquema perfectamente.
+Y además de aplicar estos principios, en nuestro ejemplo práctico vamos a intentar siempre
+aplicar los principios SOLID, de la mejor manera posible. 
+Si deseas conocer más acerca de la Arquitectura
+Hexagonal puedes encontrar más información en el <a href="https://apiumhub.com/es/tech-blog-barcelona/arquitectura-hexagonal/"><strong>blog de ApiumHub</strong></a></p>
+<h2 id="ejercicio-practico">Ejercicio Práctico</h2>
+<p>Vamos a realizar un sencillo ejercicio que nos permita ver de manera práctica,
+la aplicación de los connceptos nombrados anteriormente.
+Imaginemos que tenemos que desarrollar una aplicación para un almacén en PHP 7 utilizando Symfony 3. 
+En este primer articulo vamos a desarrollar la introducción de productos en 
+el sistema.</p>
+<p>Para ello vamos a desarrollar un punto de acceso tipo <strong>POST</strong> que definiremos
+como "<em>/products</em>".</p>
+<p>Como podemos ver, el enunciado ya nos puede dar unas pistas de las dependencias externas más claras
+ que vamos a necesitar:
+<em> Symfony, como framework de la aplicación
+</em> Una base de datos para almacenar los productos introducidos: En este caso utilizaremos Doctrine como ORM 
+para interactuar con un MySQL</p>
+<p>En este ejercicio vamos a aplicar una estrategia <em>inside-out</em>, por lo tanto, comencemos por definir nuestro dominio. Vamos
+a implementar una entidad Product muy básica con cuatro campos: id, nombre, referencia y fecha de creación. </p>
+<p>Para asegurar que los datos que van a pasar por nuestro dominio son los esperados, hemos declaro nuestra entidad con un constructor privado
+y solo podremos instanciar nuestra entidad mediante la función estática <em>fromDto</em> que espera una estructura de datos concreta
+basada en un <em>Data Transfer Object</em> que hemos definido como <em>CreateProductRequestDto</em>, tal y como podemos observar a continuación:
+```
+ class Product
+ {
+     private $id;</p>
+<pre><code> private $name;
+
+ private $reference;
+
+ private $createdAt;
+
+ private function __construct(
+     string $name,
+     string $reference
+ )
+ {
+     $this-&gt;name = $name;
+     $this-&gt;reference = $reference;
+     $this-&gt;createdAt = new \DateTime();
+ }
+
+ public static function fromDto(CreateProductRequestDto $createProductResponseDto): Product
+ {
+     return new Product($createProductResponseDto-&gt;name(), $createProductResponseDto-&gt;reference());
+ }
+
+ public function toDto()
+ {
+     return new CreateProductResponseDto($this-&gt;id, $this-&gt;name, $this-&gt;reference, $this-&gt;createdAt);
+ }
+</code></pre>
+<p>}</p>
+<p>```
+ Como podemos observar, los parametros de nuestra entidad son privados, y solo serán accesibles al exterior mediante la 
+ estructura de datos definida como <em>CreateProductResponseDto</em>, asegurandonos así de que solo vamos a exponer aquellos datos
+ que realmente deseamos mostrar. Con esta metodología hemos querido ir un paso mas allá, y vamos a diferenciar entre 
+ la capa más puramente denominada como <strong>dominio</strong> y la capa de <strong>aplicación</strong>, que a menudo tienden a mezclarse, y solo 
+ vamos a permitir la interacción con nuestro dominio, si la estructura de datos es la adecuada.</p>
+<p>A continuación, procederemos a implementar la interacción de una base de datos con nuestro dominio. Para ello, 
+necesitaremos definir un <strong>puerto</strong> que defina las funcionalidades que podrá realizar nuestro dominio con
+la dependencia externa y un <strong>adaptador</strong> que implemente la relación entre la dependencia externa y nuestro dominio.</p>
+<p>En este caso, como puerto definiremos una interfaz de repositorio en la cual vamos a definir los metodos que vamos a
+necesitar desde nuestro dominio.
+Para ello hemos creado la clase <strong>ProductRepositoryInterface</strong>, que realizará la función de puerto:
+```
+interface ProductRepositoryInterface
+{
+    public function find(string $id): Product;</p>
+<pre><code>public function save (Product $product): void;
+</code></pre>
+<p>}
+```</p>
+<p>Y como adaptador hemos creado la clase <strong>ProductRepositoryDoctrineAdapter</strong> que implementará las funciones definidas en
+la interfaz anterior. Estas serán funciones impuras, puesto que interactuan directamente con la dependencia externa y
+adaptan los datos para poder ser usados en nuestro dominio, tal que así:
+```
+class ProductRepositoryDoctrineAdapter implements ProductRepositoryInterface
+{
+    /*<em> @var EntityRepository </em>/
+    private $productRepository;</p>
+<pre><code>/** @var EntityManager */
+private $entityManager;
+
+public function __construct(EntityManager $entityManager)
+{
+    $this-&gt;entityManager = $entityManager;
+    $this-&gt;productRepository = $entityManager-&gt;getRepository(Product::class);;
+}
+
+public function find(string $id): Product
+{
+    $this-&gt;productRepository-&gt;find($id);
+}
+
+public function save(Product $product): void
+{
+    $this-&gt;entityManager-&gt;persist($product);
+    $this-&gt;entityManager-&gt;flush();
+}
+</code></pre>
+<p>}
+```
+En este caso, podemos ver como se inyecta en el constructor la dependencia externa, y como se implementan
+las funciones definidas en la interfaz que usamos como puerto.</p>
+<p>Ahora vamos a ver, como va a interaccionar todo esto con nuestro dominio. Para ello, hemos creado una capa de aplicación,
+en la cual tendremos las acciones que puede realizar nuestro sistema. En esta capa además, será donde introduciremos las llamadas
+a los adaptadores, a los cuales tendremos acceso mediante inyección de dependencias:
+```
+class ProductApplicationService
+{
+    private $productRepository;</p>
+<pre><code>public function __construct(ProductRepositoryInterface $productRepository)
+{
+    $this-&gt;productRepository = $productRepository;
+}
+
+(...)
+</code></pre>
+<p>}
+```</p>
+<p>Como podemos observar, en el constructor hemos definido el puerto <strong>ProductRepositoryInterface</strong> y no el adaptador, 
+¿Por qué? Muy sencillo, si en el futuro en lugar de utilizar Doctrine con MySql queremos simplemente persistir nuestros
+datos en una cache de Redis, por ejemplo, sería tan sencillo como crear un nuevo adapter que cumpla con el contrato
+definido en ProductRepositoryInterface y cambiar la inyección de la dependencia que hemos definido en un fichero yml:
+```
+services:
+  product.application.product_service:
+    class: ProductBundle\Application\ProductApplicationService
+    arguments: ['@product.repository.product.doctrine_adapter']</p>
+<p>product.repository.product.doctrine_adapter:
+    class: ProductBundle\Repository\ProductRepositoryDoctrineAdapter
+    arguments: ['@doctrine.orm.entity_manager']
+```
+Será tan sencillo como declarar el nuevo adapter, y substituir la dependencia del servicio aplicativo. Esto nos demuestra que
+hemos construido un dominio totalmente agnostico de sus dependencias, puesto que no tendremos que tocar una sola línea
+de código productivo para cambiar la dependencia.</p>
+<p>Ahora veamos las utilización del adaptador en el servicio aplicativo:
+```
+class ProductApplicationService
+{
+    (...)</p>
+<pre><code>public function createProduct(CreateProductRequestDto $createProductRequestDto): CreateProductResponseDto
+    {
+        $product = Product::fromDto($createProductRequestDto);
+
+        $this-&gt;productRepository-&gt;save($product);
+
+        return $product-&gt;toDto();
+    }
+</code></pre>
+<p>}
+```
+Como se puede observar, en el servicio aplicativo estamos realizando la orquestación entre el dominio puro 
+(la creación de una entidad de dominio, basada en la estructura de datos <em>CreateProductRequestDto</em>)
+y la llamada al adaptador para realizar la persistencia del objeto creado. De esta manera garantizamos que la capa de dominio
+nunca llegue a estar contaminada ni llegue a interactuar con adaptadores de dependencias externas, centrándose así unicamente en
+las reglas de negocio que tenga la aplicación.</p>
+<p>Como último apunte y tal y como habréis podido observar con anterioridad, hemos creado dos Data Transfer Objects(DTOs): <strong>CreateProductRequestDto</strong> y <strong>CreateProductResponseDto</strong>.
+Esto es para garantizar la correcta estructura de los datos de entrada y salida de nuestro dominio. Si forzamos a que desde
+el controlador se nos envíe un DTO concreto, estamos abstrayéndonos de como se están enviando los datos a nuestra aplicación y
+garantizando que entran en nuestro dominio con la estructura de datos adecuada. Lo mismo sucede con el CreateProductResponseDto,
+que nos asegura una forma centralizada de decidir que datos exponemos de nuestro dominio al exterior.</p>
+<p>Si intentamos extrapolar este ejercicio práctico a la imagen que aparece en la sección anterior,
+podemos ver como la definición de nuestras capas encaja perfectamente en el esquema teórico:</p>
+<p><img alt="hexagonal_schema_applied.png" src="HexagonalArquitecturePart1/hexagonal_schema_applied-1.png"/> </p>
+<p><em>Estructura de nuestro ejemplo aplicado al esquema de Arquitectura Hexagonal.</em></p>
+<h2 id="conclusiones">Conclusiones</h2>
+<p>Repasando los conceptos que hemos enumerado en la primera parte de nuestro artículo
+conjuntamente con el ejemplo desarrollado, podemos apreciar la aplicación de dichos
+ conceptos en nuestra aplicación:
+ * Se ha abstraido totalmente la persistencia de datos de nuestro dominio
+ * Se ha implementado un ejemplo de un puerto y un adaptador satisfactoriamente
+ * Se han implementado DTOs para ver un ejemplo de como transferir los datos entre
+ las diferentes capas de abstracción ( Controlador y  capa de Aplicación, que separa nuestro dominio del framework).
+ * La separación por capas nos brinda un sistema facilmente testeable de forma unitaria,
+ permitiendo mockear las dependencias de nuestro servicio aplicativo.
+ * Se ha creado un dominio totalmente agnóstico de las dependencias,
+ del framework y de la UI.</p>
+<p>Soy consciente de que este ha sido un ejemplo muy simple, pero quería enfatizar en el 
+ desarrollo de la arquitectura sin perdernos en los detalles de implementación de la aplicación en sí misma.
+ Nos tenemos que quedar con las teorias aplicadas en este ejercicio y lo que nos aportan en nuestro 
+ dia a día como desarrolladores, ayudándonos a implementar código limpio, mantenible y fácilmente testeable.</p>
+</body></html>

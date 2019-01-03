@@ -1,0 +1,4 @@
+product_homepage:
+    path:     /products/
+    defaults: { _controller: ProductBundle:Default:index, _format: ~ }
+    methods: GET
