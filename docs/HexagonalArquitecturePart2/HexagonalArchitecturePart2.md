@@ -80,7 +80,7 @@ ProductBundle\Domain\Product:
 Tal y como podemos observar, se está asignando de forma automatica e incremental un ID de tipo integer. Aquí a simple vista,
 podemos observar 2 problemas:
 * **Favorecer la testeabilidad**: Realizando tests unitarios, el ID de nuestra entidad siempre tendrá un valor NULL, cosa que por definición nunca debería ser así.
-* **Depndencia de agentes externos**: En el momento que se construye una instancia de la entidad, dicha instancia tiene sentido por si misma dentro de nuestro dominio,
+* **Dependencia de agentes externos**: En el momento que se construye una instancia de la entidad, dicha instancia tiene sentido por si misma dentro de nuestro dominio,
 por lo tanto debería tener un ID asignado desde el momento de su creación, independientemente de si ha sido persistida o no en la base de datos
 (Que sería el momento en el que se realizaría la asignación del ID con la configuración actual).
 
