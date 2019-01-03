@@ -84,6 +84,11 @@ podemos observar 2 problemas:
 por lo tanto debería tener un ID asignado desde el momento de su creación, independientemente de si ha sido persistida o no en la base de datos
 (Que sería el momento en el que se realizaría la asignación del ID con la configuración actual).
 
+Además de romper con estos dos principios de buenas prácticas sobre arquitectura hexagonal,
+tenmeos un claro problema de seguridad. En caso de que queramos exponer los datos de nuestro producto accediendo a estos
+mediante su ID, estamos exponiendo un id de tipo integer autoincremental. De manera que cualquier usario de nuestra API
+podría acceder a todos los datos de nuestros productos. Vamos a intentar solventar tambien este problema.
+
 Así pues, vamos a intentar mejorar nuestro código, aplicando de forma iterativa los conceptos definidos en el artículo anterior
 sobre nuestra entidad de dominio.
 
@@ -121,7 +126,10 @@ ProductBundle\Domain\Product:
 ```
 De esta forma, logramos abstraernos de la dependencia externa que nos otorga el ORM. Y el campo *id*
 queda definido como identificador único de tipo string, pero la generación de éste viene dada
-desde el dominio.
+desde el dominio. 
+
+Además, al utilizar id de tipo **UUID**, eliminamos el acceso a los productos con ids de forma secuencial,
+y garantizamos que sea casi imposible acceder a otros productos que no deseemos exponer al usuario.
 
 Mejorando la Testeabilidad
 --------------------
@@ -211,5 +219,8 @@ dependencia externa.
 Con esta práctica, además de eliminar cualquier dependencia de nuestro dominio hacia un agente
 externo, hemos logrado testear al 100% nuestra entidad, y poder preveer el resultado final de la construcción de la
 entidad, asegurando así un correcto comportamiento.
+
+En último lugar, hemos mejorado la seguridad de nuestros datos, puesto que hemos evitado la exposición de datos
+que no se deseen exponer evitando tener IDs secuenciales.
 
 [1]:  https://apiumhub.com/es/tech-blog-barcelona/aplicando-arquitectura-hexagonal-proyecto-symfony/
