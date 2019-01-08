@@ -15,7 +15,7 @@ sobre arquitectura hexagonal en el [**blog de ApiumHub**][1], puesto que se defi
 conceptos que vamos a tratar a continuación como *Testeabilidad*, *Independencia del framework*,
 *Independencia de cualquier Agente externo*, etc.
 
-Por qué debriamos asignar el ID en Dominio?
+Por qué deberíamos asignar el ID en Dominio?
 ================
 Basándome en mi experiencia, muchos de los proyectos PHP con Symfony en los que he trabajado, se delega
 la tarea de asignar el ID a la entidad en el ORM. Esto a priori puede darnos ciertos problemas. Por ejemplo,
@@ -79,7 +79,8 @@ ProductBundle\Domain\Product:
 ```
 Tal y como podemos observar, se está asignando de forma automatica e incremental un ID de tipo integer. Aquí a simple vista,
 podemos observar 2 problemas:
-* **Favorecer la testeabilidad**: Realizando tests unitarios, el ID de nuestra entidad siempre tendrá un valor NULL, cosa que por definición nunca debería ser así.
+* **Dificulta la testeabilidad**: Realizando tests unitarios, el ID de nuestra entidad siempre tendrá un valor NULL,
+puesto que no tendremos un ID en nuestra entidad hasta que no se persista en la base de datos, cosa que por definición nunca debería ser así.
 * **Dependencia de agentes externos**: En el momento que se construye una instancia de la entidad, dicha instancia tiene sentido por si misma dentro de nuestro dominio,
 por lo tanto debería tener un ID asignado desde el momento de su creación, independientemente de si ha sido persistida o no en la base de datos
 (Que sería el momento en el que se realizaría la asignación del ID con la configuración actual).
