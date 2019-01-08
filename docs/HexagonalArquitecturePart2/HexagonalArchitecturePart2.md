@@ -18,7 +18,7 @@ conceptos que vamos a tratar a continuación como *Testeabilidad*, *Independenci
 Por qué deberíamos asignar el ID en Dominio?
 ================
 Basándome en mi experiencia, muchos de los proyectos PHP con Symfony en los que he trabajado, se delega
-la tarea de asignar el ID a la entidad en el ORM. Esto a priori puede darnos ciertos problemas. Por ejemplo,
+la tarea de asignar el ID a la entidad en el ORM. Esto a priori puede darnos ciertos problemas, por ejemplo
 nos dificulta la testeabilidad muchísimo, puesto que delegamos una parte de la construcción de nuestra
 entidad a un agente externo.
 
@@ -84,18 +84,24 @@ puesto que no tendremos un ID en nuestra entidad hasta que no se persista en la 
 * **Dependencia de agentes externos**: En el momento que se construye una instancia de la entidad, dicha instancia tiene sentido por si misma dentro de nuestro dominio,
 por lo tanto debería tener un ID asignado desde el momento de su creación, independientemente de si ha sido persistida o no en la base de datos
 (Que sería el momento en el que se realizaría la asignación del ID con la configuración actual).
+Una instancia de una clase debería ser correcta en el mismo momento en el que ésta se crea, puesto que en el propio constructor
+tendremos todas las comprobaciones necesarias para permitir su creación. En el escenario inicial, esto no sucede así, puesto
+que hasta que no persistamos la entidad, ésta no será completa, queriendo decir que pese a haber finalizado su construcción,
+dicha entidad se encuentra en un estado aún incompleto, y en consecuencia, erróneo.
 
 Además de romper con estos dos principios de buenas prácticas sobre arquitectura hexagonal,
-tenmeos un claro problema de seguridad. En caso de que queramos exponer los datos de nuestro producto accediendo a estos
+tenemos un claro problema de seguridad. En caso de que queramos exponer los datos de nuestro producto accediendo a estos
 mediante su ID, estamos exponiendo un id de tipo integer autoincremental. De manera que cualquier usario de nuestra API
 podría acceder a todos los datos de nuestros productos. Vamos a intentar solventar tambien este problema.
+En último lugar, dejando de utilizar ids con integers simples también solventaríamos un posible problema de colisiones en
+el caso de que trabajasemos con varios servidores a la vez sobre una misma base de datos.
 
 Así pues, vamos a intentar mejorar nuestro código, aplicando de forma iterativa los conceptos definidos en el artículo anterior
 sobre nuestra entidad de dominio.
 
 Eliminar agentes externos
 -----
-Primero de todo, debemos abstraer nuestro dominio de cualquier agente o dependencia externa, en estre caso, vamos a mover
+Primero de todo debemos abstraer nuestro dominio de cualquier agente o dependencia externa, en estre caso, vamos a mover
 la generación del ID de la entidad al constructor de la entidad, en lugar de hacerlo desde la configuración en el fichero yaml:
 ```php
 private function __construct(
@@ -130,7 +136,8 @@ queda definido como identificador único de tipo string, pero la generación de 
 desde el dominio. 
 
 Además, al utilizar id de tipo **UUID**, eliminamos el acceso a los productos con ids de forma secuencial,
-y garantizamos que sea casi imposible acceder a otros productos que no deseemos exponer al usuario.
+y garantizamos que sea casi imposible acceder a otros productos que no deseemos exponer al usuario, 
+así como posibles colisiones entre id's.
 
 Mejorando la Testeabilidad
 --------------------
@@ -143,7 +150,7 @@ Además, solo podríamos crear objetos nuevos, pero no hidratar objetos dados de
 la base de datos, este fallo nos indica que la generación del ID no está
 en el lugar apropiado. 
 
-Primero de todo, vamos a realizar el Test para verificar que el comportamiento de la construcción 
+Antes de nada, vamos a realizar el Test para verificar que el comportamiento de la construcción 
 de la entidad es el esperado:
 ```php
 public function testProductDomainEntity()
@@ -163,7 +170,7 @@ mostrar de nuestra entidad, debemos realizar la transformación mediante el mét
 a los datos que deseamos exponer de nuestra entidad. Como ya podréis suponer, el test no pasa puesto que tanto el **id** 
 como el **createdAt** no coinciden.
 
-Esto nos está indicando que para mejorar la testeabilidad, debemos extraer la creación de ambos campos de nuestra entidad:
+Esto nos hace pensar que para mejorar la testeabilidad debemos extraer la creación de ambos campos de nuestra entidad:
 ```php
 private function __construct(
     Uuid $id,
@@ -214,8 +221,8 @@ Conclusiones
 Con este sencillísimo ejemplo, hemos podido demostrar los problemas que nos aporta una 
 de las prácticas más extendidas y cuotidianas en los proyectos PHP. Sin embargo, tal y como
 hemos podido observar, es una práctica que debemos evitar.
-Tal y como vimos en el artículo anterior, es muy importante aislar nuestro dominio de cualquier
-dependencia externa. 
+Como ya vimos en el artículo anterior, es muy importante aislar nuestro dominio de cualquier
+dependencia externa, manteniendo nuestro dominio puro y desacoplado.
 
 Con esta práctica, además de eliminar cualquier dependencia de nuestro dominio hacia un agente
 externo, hemos logrado testear al 100% nuestra entidad, y poder preveer el resultado final de la construcción de la
