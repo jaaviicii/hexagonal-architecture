@@ -215,6 +215,9 @@ public function testProductDomainEntity()
 Así tenemos el test en verde, gracias a la extracción de los campos Id y createdAt, que
 nos permite definir en el test el resultado esperado antes de la ejecución de éste.
 
+Añadiendo un Identificador de Dominio
+-------
+
 Como podemos observar, aún habiendo extraido la dependencia de Doctrine en la generación de nuestro ID, ahora
 seguimos teniendo una dependencia sobre una librería externa, para generar el UUID. Si queremos ir un poco más lejos
 y mejorar la abstracción de la dependencia de nuestro dominio de agentes extrenos, podemos crear nuestro propio ID de dominio,
