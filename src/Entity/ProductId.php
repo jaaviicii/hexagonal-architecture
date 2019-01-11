@@ -8,7 +8,7 @@ class ProductId
 {
     private $id;
 
-    public function __construct(string $id)
+    private function __construct(string $id)
     {
         $this->id = $id;
     }
