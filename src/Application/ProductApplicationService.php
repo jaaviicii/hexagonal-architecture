@@ -4,7 +4,7 @@ namespace App\Application;
 
 use App\Application\DTOs\CreateProductRequestDto;
 use App\Application\DTOs\CreateProductResponseDto;
-use Entity\Product;
+use App\Entity\Product;
 use Entity\ProductRepositoryInterface;
 
 class ProductApplicationService

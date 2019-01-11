@@ -18,12 +18,11 @@ class Product
     private $createdAt;
 
     private function __construct(
-        Uuid $id,
+        ProductId $id,
         string $name,
         string $reference,
         DateTime $createdAt
-    )
-    {
+    ) {
         $this->id = $id->toString();
         $this->name = $name;
         $this->reference = $reference;

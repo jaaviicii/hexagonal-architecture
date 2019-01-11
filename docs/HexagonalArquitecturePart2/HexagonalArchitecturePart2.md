@@ -215,6 +215,143 @@ public function testProductDomainEntity()
 Así tenemos el test en verde, gracias a la extracción de los campos Id y createdAt, que
 nos permite definir en el test el resultado esperado antes de la ejecución de éste.
 
+Como podemos observar, aún habiendo extraido la dependencia de Doctrine en la generación de nuestro ID, ahora
+seguimos teniendo una dependencia sobre una librería externa, para generar el UUID. Si queremos ir un poco más lejos
+y mejorar la abstracción de la dependencia de nuestro dominio de agentes extrenos, podemos crear nuestro propio ID de dominio,
+en el cual encapsularemos la dependencia de la librería externa dentro de este *value object*:
+```php
+class ProductId
+{
+    private $id;
+
+    public function __construct(string $id)
+    {
+        $this->id = $id;
+    }
+
+    public static function generate(): ProductId
+    {
+        return new self(Uuid::uuid4()->toString());
+    }
+
+    public function build(string $id): ProductId
+    {
+        if (Uuid::isValid($id)) {
+            return new self($id);
+        } else {
+            throw new InvalidIdFormatException("Invalid ProductId format: ".$id);
+        }
+    }
+
+    public function value(): string
+    {
+        return $this->id;
+    }
+}
+```
+Tendremos que refactorizar nuestra entidad de dominio y el *createProductRequestDto* para eliminar la dependencia de la libreria de UUID:
+```php
+class Product
+{
+    private $id;
+
+    private $name;
+
+    private $reference;
+
+    private $createdAt;
+
+    private function __construct(
+        ProductId $id,
+        string $name,
+        string $reference,
+        DateTime $createdAt
+    ) {
+        $this->id = $id->toString();
+        $this->name = $name;
+        $this->reference = $reference;
+        $this->createdAt =$createdAt;
+    }
+
+    public static function fromDto(CreateProductRequestDto $createProductResponseDto): Product
+    {
+        return new Product(
+            $createProductResponseDto->id(),
+            $createProductResponseDto->name(),
+            $createProductResponseDto->reference(),
+            $createProductResponseDto->createdAt()
+        );
+    }
+
+    public function toDto()
+    {
+        return new CreateProductResponseDto($this->id, $this->name, $this->reference, $this->createdAt);
+    }
+}
+```
+
+```php
+class CreateProductRequestDto
+{
+    private $id;
+
+    private $name;
+
+    private $reference;
+
+    private $createdAt;
+
+    public function __construct(ProductId $id, string $name, string $reference, DateTime $createdAt)
+    {
+        $this->id = $id;
+        $this->name = $name;
+        $this->reference = $reference;
+        $this->createdAt = $createdAt;
+    }
+
+    public function id(): ProductId
+    {
+        return $this->id;
+    }
+
+    public function name(): string
+    {
+        return $this->name;
+    }
+
+    public function reference(): string
+    {
+        return $this->reference;
+    }
+
+    public function createdAt(): DateTime
+    {
+        return $this->createdAt;
+    }
+}
+```
+
+Por último, modificar nuestro test con el nuevo identificador de dominio:
+```php
+class ProductTest extends TestCase
+{
+    public function testProductDomainEntity()
+    {
+        $productId = ProductId::generate();
+        $createdAt = new DateTime();
+        $createRequestDto = new CreateProductRequestDto($productId,'nameTest', 'reference-124', $createdAt);
+        $product = Product::fromDto($createRequestDto);
+        $result = $product->toDto();
+
+        $expected = new CreateProductResponseDto($productId, 'nameTest', 'reference-124', $createdAt);
+
+        self::assertEquals($expected, $result);
+    }
+}
+```
+Con esta última iteración hemos reducido la dependecia de la librería externa UUID a un único punto en nuestro dominio,
+dentro del *value object* **ProductId**. De forma que si en el futuro deseamos modificar el formato de los identificadores
+de nuestro dominio, solo debemos cambiar la dependencia en un único punto de nuestro dominio.
 
 Conclusiones
 ----
@@ -224,8 +361,8 @@ hemos podido observar, es una práctica que debemos evitar.
 Como ya vimos en el artículo anterior, es muy importante aislar nuestro dominio de cualquier
 dependencia externa, manteniendo nuestro dominio puro y desacoplado.
 
-Con esta práctica, además de eliminar cualquier dependencia de nuestro dominio hacia un agente
-externo, hemos logrado testear al 100% nuestra entidad, y poder preveer el resultado final de la construcción de la
+Con esta práctica, además de minimizar la dependencia de nuestro dominio respecto a un agente externo
+a un único y controlado punto, hemos logrado testear al 100% nuestra entidad, y poder preveer el resultado final de la construcción de la
 entidad, asegurando así un correcto comportamiento.
 
 En último lugar, hemos mejorado la seguridad de nuestros datos, puesto que hemos evitado la exposición de datos

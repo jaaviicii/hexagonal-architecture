@@ -2,8 +2,8 @@
 
 namespace App\Application\DTOs;
 
+use App\Entity\ProductId;
 use DateTime;
-use Ramsey\Uuid\Uuid;
 
 class CreateProductRequestDto
 {
@@ -15,7 +15,7 @@ class CreateProductRequestDto
 
     private $createdAt;
 
-    public function __construct(Uuid $id, string $name, string $reference, DateTime $createdAt)
+    public function __construct(ProductId $id, string $name, string $reference, DateTime $createdAt)
     {
         $this->id = $id;
         $this->name = $name;
@@ -23,7 +23,7 @@ class CreateProductRequestDto
         $this->createdAt = $createdAt;
     }
 
-    public function id(): Uuid
+    public function id(): ProductId
     {
         return $this->id;
     }
